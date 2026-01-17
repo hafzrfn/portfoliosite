@@ -1,0 +1,1138 @@
+@font-face {
+    font-family: 'Google Sans';
+    src: url(fonts/GoogleSans-VariableFont_GRAD,opsz,wght.ttf);
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Google Sans';
+    src: url(fonts/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf);
+    font-weight: normal;
+    font-style: italic;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Google Sans', sans-serif;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: #080808;
+    color: #fff;
+    overflow-x: hidden;
+}
+
+/* ============================================
+   ANIMATION KEYFRAMES
+   
+   These define the actual motion/transition.
+   @keyframes lets you define animation states
+   from (0%) to (100%) or any percentage in between.
+   ============================================ */
+
+/* Basic fade in - opacity goes from invisible to visible */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Fade in while moving up - creates an elegant entrance */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Fade in from top - good for navbar */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scale up with fade - creates a "pop" effect */
+@keyframes popUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Slide in from left - for staggered card entrances */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Infinite scroll animation for carousel
+   Moves from 0 to -50% because we duplicate content,
+   so when it reaches -50%, it seamlessly loops */
+@keyframes scrollCarousel {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* ============================================
+   ANIMATION UTILITY CLASSES
+   
+   Apply these classes to elements to animate them.
+   'forwards' keeps the element at the final state.
+   'opacity: 0' on the base class prevents flash 
+   before animation starts.
+   ============================================ */
+
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+.fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.fade-in-down {
+    opacity: 0;
+    animation: fadeInDown 0.8s ease-out forwards;
+}
+
+.pop-up {
+    opacity: 0;
+    animation: popUp 0.5s ease-out forwards;
+}
+
+.slide-in-left {
+    opacity: 0;
+    animation: slideInLeft 0.6s ease-out forwards;
+}
+
+/* Animation delay classes - create staggered effects
+   Use these with the animation classes above */
+.delay-1 {
+    animation-delay: 0.1s;
+}
+
+.delay-2 {
+    animation-delay: 0.2s;
+}
+
+.delay-3 {
+    animation-delay: 0.3s;
+}
+
+.delay-4 {
+    animation-delay: 0.4s;
+}
+
+.delay-5 {
+    animation-delay: 0.5s;
+}
+
+.delay-6 {
+    animation-delay: 0.6s;
+}
+
+.delay-7 {
+    animation-delay: 0.7s;
+}
+
+.delay-8 {
+    animation-delay: 0.8s;
+}
+
+/* ============================================
+   SCROLL-TRIGGERED ANIMATIONS
+   
+   Elements start hidden, then animate when
+   the 'animate' class is added via JavaScript
+   IntersectionObserver.
+   ============================================ */
+
+.scroll-animate {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s ease-out;
+}
+
+.scroll-animate.animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* For cards with staggered delays on scroll */
+.scroll-animate.stagger-1 {
+    transition-delay: 0.1s;
+}
+
+.scroll-animate.stagger-2 {
+    transition-delay: 0.2s;
+}
+
+.scroll-animate.stagger-3 {
+    transition-delay: 0.3s;
+}
+
+.scroll-animate.stagger-4 {
+    transition-delay: 0.4s;
+}
+
+/* ============================================
+   HEADER SECTION
+   ============================================ */
+
+#header {
+    width: 100%;
+    height: 100vh;
+    background-image: url(images/minimalist.jpg);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: relative;
+}
+
+/* Subtle dark overlay for better text readability */
+#header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    animation: fadeIn 1.2s ease-out 0.2s forwards;
+}
+
+#header .container {
+    position: relative;
+    z-index: 1;
+}
+
+.container {
+    padding: 10px 10%
+        /* 10px for the height, 10% for the width */
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.logo {
+    width: 140px;
+}
+
+/* Desktop nav (visible on desktop, hidden on mobile) */
+.desktop-nav li {
+    display: inline-block;
+    list-style: none;
+    margin: 10px 20px;
+}
+
+.desktop-nav li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 18px;
+    position: relative;
+}
+
+.desktop-nav li a::after {
+    content: '';
+    width: 0%;
+    height: 3px;
+    background: #ff004f;
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    transition: 0.5s;
+}
+
+.desktop-nav li a:hover::after {
+    width: 100%;
+}
+
+/* Fixed sidemenu - hidden on desktop by default */
+#sidemenu {
+    display: none;
+}
+
+.header-text {
+    margin-top: 20%;
+    font-size: 30px;
+    text-shadow: 2px 2px 8px black;
+}
+
+.header-text h1 {
+    font-size: 60px;
+    margin-top: 20px;
+}
+
+.header-text h1 span {
+    color: #ff004f;
+}
+
+/* ============================================
+   ABOUT SECTION
+   ============================================ */
+
+#about {
+    padding: 80px 0;
+    color: #ababab;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.about-col-1 {
+    flex-basis: 30%;
+}
+
+.about-col-1 img {
+    width: 100%;
+    border-radius: 15px;
+}
+
+.about-col-2 {
+    flex-basis: 100%;
+}
+
+.sub-title {
+    font-size: 60px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.para1 {
+    margin-top: 10px;
+    font-size: 25px;
+}
+
+/* ============================================
+   TAB NAVIGATION
+   ============================================ */
+
+.tab-titles {
+    display: flex;
+    justify-content: center;
+    margin: 40px 0 20px;
+}
+
+.tab-links {
+    margin-right: 50px;
+    font-size: 22px;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.tab-links:hover {
+    color: #ff004f;
+}
+
+.tab-links::after {
+    content: '';
+    width: 0;
+    height: 3px;
+    background: #ff004f;
+    position: absolute;
+    left: 0;
+    bottom: -8px;
+    transition: 0.5s;
+}
+
+.tab-links.active-link::after {
+    width: 50%;
+}
+
+.tab-links.active-link {
+    color: #ff004f;
+}
+
+/* Tab content animation - pop up effect when switching tabs */
+.tab-contents>ul>li {
+    list-style: none;
+    margin: 10px 0;
+    font-size: 20px;
+    line-height: 1.8;
+}
+
+.tab-contents ul li span {
+    color: #b54769;
+    font-size: 30px;
+}
+
+.tab-contents {
+    display: none;
+}
+
+.tab-contents.active-tab {
+    display: block;
+    animation: popUp 0.4s ease-out forwards;
+}
+
+/* ============================================
+   TECHNICAL SKILLS - STATIC GRID
+   
+   Simple grid layout for skill icons
+   ============================================ */
+
+.skills-section {
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.skills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: left;
+    margin-bottom: 30px;
+}
+
+.skill-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(145deg, #1a1a1a, #262626);
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+}
+
+.skill-item:hover {
+    border-color: #ff004f;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255, 0, 79, 0.2);
+}
+
+.skill-item i {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.skill-item img {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 6px;
+}
+
+.skill-item span {
+    font-size: 11px !important;
+    color: #fff !important;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.skills-label {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 15px;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: left;
+}
+
+/* ============================================
+   PROJECTS SECTION (formerly services)
+   ============================================ */
+
+#services {
+    padding: 30px 0;
+}
+
+.services-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-gap: 40px;
+    margin-top: 50px;
+}
+
+.project-card {
+    background: linear-gradient(145deg, #1a1a1a, #262626);
+    padding: 35px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #333;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #ff004f, #ff6b6b);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+}
+
+.project-card:hover::before {
+    transform: scaleX(1);
+}
+
+.project-card:hover {
+    transform: translateY(-10px);
+    border-color: #ff004f;
+    box-shadow: 0 20px 40px rgba(255, 0, 79, 0.15);
+}
+
+.project-card i {
+    font-size: 45px;
+    margin-bottom: 20px;
+    color: #ff004f;
+}
+
+.project-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    border-radius: 12px;
+}
+
+.project-icon-fallback {
+    font-size: 45px;
+    margin-bottom: 20px;
+    color: #ff004f;
+}
+
+.project-card h2 {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.project-card .tech-stack {
+    font-size: 13px;
+    color: #ff004f;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.project-card p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #ababab;
+    margin-bottom: 20px;
+}
+
+.project-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: auto;
+}
+
+.project-btn {
+    padding: 6px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.project-btn.primary {
+    background: #262626;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+.project-btn.primary:hover {
+    background: #ff004f;
+    border-color: #ff004f;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.project-btn.secondary {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+.project-btn.secondary:hover {
+    border-color: #ff004f;
+    color: #ff004f;
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   GENERAL BUTTON STYLES
+   ============================================ */
+
+.btn {
+    display: block;
+    margin: 50px auto;
+    width: fit-content;
+    border: 1px solid #ff004f;
+    padding: 14px 50px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #fff;
+    transition: background 0.5s;
+}
+
+.btn:hover {
+    background: #ff004f;
+}
+
+.btn.btn2 {
+    display: inline-block;
+    font-weight: bold;
+    background: #ff004f;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 0.4s ease;
+}
+
+.btn.btn2:hover {
+    background: #cc003f;
+    transform: translateY(-5px);
+}
+
+/* ============================================
+   CONTACT SECTION - CENTERED LAYOUT
+   ============================================ */
+
+#contact {
+    padding: 80px 0;
+}
+
+#contact .container {
+    text-align: center;
+}
+
+.contact-center {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.contact-center .sub-title {
+    margin-bottom: 30px;
+}
+
+.contact-center p {
+    margin: 15px 0;
+    font-size: 18px;
+    color: #ababab;
+}
+
+.contact-center p i {
+    color: #ff004f;
+    margin-right: 15px;
+    font-size: 22px;
+    width: 30px;
+}
+
+.social-icons {
+    margin: 40px 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.social-icons a {
+    text-decoration: none;
+    font-size: 35px;
+    color: #ababab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    transition: all 0.4s ease;
+}
+
+.social-icons a:hover {
+    color: #ff004f;
+    border-color: #ff004f;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255, 0, 79, 0.3);
+}
+
+.message-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 40px;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: 600;
+    transition: all 0.4s ease;
+    border: none;
+}
+
+.message-btn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(37, 211, 102, 0.4);
+}
+
+.message-btn i {
+    font-size: 24px;
+}
+
+/* ============================================
+   EXPERIENCE SECTION
+   ============================================ */
+
+.experience-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.experience-list>li {
+    margin-bottom: 28px;
+}
+
+.experience-list span {
+    color: #ff004f;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.experience-list strong {
+    display: block;
+    margin-top: 4px;
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.experience-list ul {
+    list-style-type: disc;
+    list-style-position: inside;
+    padding-left: 0;
+    margin: 10px 0 0 0;
+}
+
+.experience-list ul li {
+    color: #cccccc;
+    margin-bottom: 8px;
+    line-height: 1.6;
+    margin-left: 20px;
+}
+
+/* ============================================
+   FOOTER/COPYRIGHT
+   ============================================ */
+
+.copyright {
+    width: 100%;
+    text-align: center;
+    padding: 25px 0;
+    background: linear-gradient(145deg, #1a1a1a, #262626);
+    font-weight: 300;
+    border-top: 1px solid #333;
+}
+
+/* Ensure footer stays at absolute bottom */
+html,
+body {
+    min-height: 100vh;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#contact {
+    margin-top: auto;
+}
+
+.copyright {
+    flex-shrink: 0;
+}
+
+.copyright i {
+    color: #ff004f;
+}
+
+.typewriter {
+    display: flex;
+}
+
+.typewriter p {
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid;
+    width: 0;
+    animation:
+        typing 4s steps(60) forwards,
+        blink 0.8s step-end infinite;
+}
+
+@keyframes typing {
+    from {
+        width: 0;
+    }
+    to {
+        width: 46%;
+    }
+}
+
+@keyframes blink {
+    50% {
+        border-color: transparent;
+    }
+}
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* ============================================
+   ANIMATED HAMBURGER BUTTON
+   ============================================ */
+
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(20, 20, 20, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    /* Fixed position for visibility on scroll */
+    position: fixed;
+    top: 15px;
+    right: 15px;
+}
+
+.hamburger:hover {
+    background: rgba(255, 0, 79, 0.2);
+    border-color: #ff004f;
+}
+
+.hamburger-line {
+    width: 22px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: all 0.3s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+    transform-origin: center;
+}
+
+.hamburger-line:nth-child(1) {
+    margin-bottom: 5px;
+}
+
+.hamburger-line:nth-child(3) {
+    margin-top: 5px;
+}
+
+/* Hamburger to X animation */
+.hamburger.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.hamburger.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* ============================================
+   MOBILE MEDIA QUERY
+   ============================================ */
+
+@media only screen and (max-width: 768px) {
+    #header {
+        background-image: url(images/mobile-background.png);
+        background-attachment: scroll;
+        /* Better mobile performance */
+    }
+
+    .header-text {
+        margin-top: 50%;
+        font-size: 16px;
+    }
+
+    .header-text h1 {
+        font-size: 32px;
+    }
+
+    /* Show hamburger button */
+    .hamburger {
+        display: flex;
+    }
+
+    /* Hide desktop nav on mobile */
+    .desktop-nav {
+        display: none !important;
+    }
+
+    /* Show and style the fixed sidemenu on mobile */
+    #sidemenu {
+        display: flex;
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 280px;
+        height: 100vh;
+        background: rgba(20, 20, 20, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 100px 40px 40px;
+        z-index: 1000;
+        flex-direction: column;
+        gap: 0;
+        list-style: none;
+        margin: 0;
+
+        /* Hidden by default */
+        transform: translateX(100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+            opacity 0.4s ease,
+            visibility 0.4s ease;
+    }
+
+    /* Show nav panel when active */
+    #sidemenu.active {
+        transform: translateX(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Nav items styling */
+    #sidemenu li {
+        display: block;
+        margin: 0;
+        opacity: 0;
+        transform: translateX(30px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Staggered animation for nav items */
+    #sidemenu.active li:nth-child(1) {
+        transition-delay: 0.1s;
+    }
+
+    #sidemenu.active li:nth-child(2) {
+        transition-delay: 0.15s;
+    }
+
+    #sidemenu.active li:nth-child(3) {
+        transition-delay: 0.2s;
+    }
+
+    #sidemenu.active li:nth-child(4) {
+        transition-delay: 0.25s;
+    }
+
+    #sidemenu.active li {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    #sidemenu li a {
+        display: block;
+        padding: 18px 0;
+        font-size: 22px;
+        font-weight: 500;
+        color: #fff;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    #sidemenu li a:hover {
+        color: #ff004f;
+        padding-left: 10px;
+    }
+
+    .sub-title {
+        font-size: 36px;
+    }
+
+    .about-col-1,
+    .about-col-2 {
+        flex-basis: 100%;
+    }
+
+    .about-col-1 {
+        margin-bottom: 30px;
+    }
+
+    .about-col-2 {
+        font-size: 14px;
+    }
+
+    .para1 {
+        font-size: 18px;
+    }
+
+    .tab-titles {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .tab-links {
+        font-size: 16px;
+        margin-right: 15px;
+    }
+
+    .contact-center p {
+        font-size: 16px;
+    }
+
+    .copyright {
+        font-size: 14px;
+    }
+
+    /* Mobile skill grid adjustments */
+    .skills-grid {
+        justify-content: center;
+    }
+
+    .skill-item {
+        width: 75px;
+        height: 75px;
+        padding: 10px;
+    }
+
+    .skill-item i {
+        font-size: 24px;
+    }
+
+    .skill-item span {
+        font-size: 9px !important;
+    }
+
+    /* Mobile project cards */
+    .services-list {
+        grid-template-columns: 1fr;
+    }
+
+    .project-card {
+        padding: 25px;
+    }
+
+    .project-card h2 {
+        font-size: 22px;
+    }
+
+    .project-buttons {
+        flex-direction: column;
+    }
+
+    .project-btn {
+        justify-content: center;
+    }
+
+    /* Footer adjustments */
+    .social-icons a {
+        width: 50px;
+        height: 50px;
+        font-size: 28px;
+    }
+
+    .message-btn {
+        padding: 14px 30px;
+        font-size: 16px;
+    }
+}
+
+/* Smaller mobile screens */
+@media only screen and (max-width: 480px) {
+    .header-text {
+        margin-top: 60%;
+    }
+
+    .header-text h1 {
+        font-size: 26px;
+    }
+
+    .sub-title {
+        font-size: 30px;
+    }
+
+    .para1 {
+        font-size: 16px;
+    }
+
+    .container {
+        padding: 10px 5%;
+    }
+}
