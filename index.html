@@ -3,358 +3,286 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Muhammad Hafizh Rifan - Frontend Developer & Freelance Video Editor Portfolio">
-    <title>Hafizh Rifan | Portfolio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description"
+        content="Muhammad Hafizh Rifan — Frontend Developer and freelance video editor based in Jakarta. Computer Science student at Universitas Negeri Jakarta.">
+    <meta name="theme-color" content="#0A0B0D">
+    <title>Hafizh Rifan — Frontend Developer</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
-    <script src="https://kit.fontawesome.com/ba0f156071.js" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/ba0f156071.js" crossorigin="anonymous" defer></script>
+
+    <!-- Content first, renderer second. Both plain scripts so the page also
+         works when opened directly from disk via file:// -->
+    <script src="content.js"></script>
 </head>
 
 <body>
-    <!-- ============================================
-         HEADER SECTION
-         
-         Using scroll-animate for repeatable animations
-         when scrolling back to the landing page
-         ============================================ -->
-    <!-- Fixed hamburger button for mobile (outside header so it stays visible on scroll) -->
-    <button class="hamburger" id="hamburger" onclick="togglemenu()" aria-label="Toggle menu">
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-    </button>
 
-    <!-- Fixed mobile nav menu (outside header so it stays visible on scroll) -->
-    <ul id="sidemenu">
-        <li><a href="#header" onclick="closemenu()">Home</a></li>
-        <li><a href="#about" onclick="closemenu()">About</a></li>
-        <li><a href="#services" onclick="closemenu()">Projects</a></li>
-        <li><a href="#contact" onclick="closemenu()">Contact</a></li>
-    </ul>
+    <!-- ════════════════════════════════════════════════════════════
+         ATMOSPHERE — fixed film grain, hairline dot grid, and a reactive
+         phosphor pixel-field that answers to the cursor. All decorative,
+         all pointer-events:none — nothing here is ever interactive itself.
+         ════════════════════════════════════════════════════════════ -->
+    <div class="grain" aria-hidden="true"></div>
+    <div class="grid-overlay" aria-hidden="true"></div>
+    <canvas class="pixel-field" id="pixelField" aria-hidden="true"></canvas>
 
-    <div id="header">
-        <div class="container">
-            <nav class="scroll-animate stagger-1">
-                <img src="images/hafzrfn.png" class="logo">
-                <!-- Desktop nav links (hidden on mobile) -->
-                <ul class="desktop-nav">
-                    <li><a href="#header">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#services">Projects</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-            </nav>
-            <div class="header-text scroll-animate stagger-2">
-                <div class="typewriter">
-                    <p>Frontend Developer &amp; Freelance Video Editor</p>
-                </div>
-                <h1>Hello, I am <br>Muhammad <span>Hafizh</span> Rifan<br></h1>
-            </div>
-            <div class="See CV button scroll-animate stagger-3">
-                <a class="btn btn2" href="https://docs.google.com/document/d/14u-yXx91URZ4HZ2_fvbdaYOk5nNHSyxq/edit"
-                    target="_blank"><i class="fa fa-eye"></i> See CV</a>
-            </div>
-        </div>
+    <svg class="noise-source" aria-hidden="true" focusable="false">
+        <filter id="grainFilter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" stitchTiles="stitch" />
+            <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grainFilter)" />
+    </svg>
+
+    <a class="skip-link" href="#hero">Skip to content</a>
+
+    <!-- ════════════════════════════════════════════════════════════
+         NAV
+         ════════════════════════════════════════════════════════════ -->
+    <header class="nav" id="nav">
+        <a class="nav-mark" href="#hero" aria-label="Back to top">
+            <span class="nav-mark-glyph">HR</span>
+        </a>
+
+        <nav class="nav-links" aria-label="Sections">
+            <a href="#profile"><i>01</i> Profile</a>
+            <a href="#experience"><i>02</i> Experience</a>
+            <a href="#work"><i>03</i> Work</a>
+            <a href="#stack"><i>04</i> Stack</a>
+            <a href="#contact"><i>05</i> Contact</a>
+        </nav>
+
+        <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navOverlay"
+            aria-label="Open menu">
+            <span></span><span></span>
+        </button>
+
+        <div class="nav-progress" id="navProgress" aria-hidden="true"></div>
+    </header>
+
+    <div class="nav-overlay" id="navOverlay" hidden>
+        <nav aria-label="Sections">
+            <a href="#profile"><i>01</i> Profile</a>
+            <a href="#experience"><i>02</i> Experience</a>
+            <a href="#work"><i>03</i> Work</a>
+            <a href="#stack"><i>04</i> Stack</a>
+            <a href="#contact"><i>05</i> Contact</a>
+        </nav>
+        <p class="nav-overlay-foot" data-bind="location"></p>
     </div>
 
-    <!-- ============================================
-         ABOUT SECTION
-         
-         Uses scroll-animate class which triggers
-         when IntersectionObserver detects it in viewport
-         ============================================ -->
-    <div id="about">
-        <div class="container">
-            <div class="row">
-                <div class="about-col-2 scroll-animate">
-                    <h1 class="sub-title">About Me</h1>
-                    <p class="para1">
-                        2nd-year Computer Science student at the State University of Jakarta passionate about Frontend
-                        Development and Video Editing. I have hands-on experience building responsive frontend web applications and am actively
-                        expanding my skills into AI, backend, and mobile development. I also currently do freelance
-                        Video Editing on the side. I am now seeking internship opportunities to apply my skills in real-world projects and gain valuable experience as a developer.
-                    </p>
+    <main>
 
-                    <div class="tab-titles">
-                        <p class="tab-links active-link" onclick="opentab('skills')">Skills</p>
-                        <p class="tab-links" onclick="opentab('experience')">Experience</p>
-                        <p class="tab-links" onclick="opentab('education')">Education</p>
-                    </div>
+        <!-- ════════════════════════════════════════════════════════
+             00 · HERO
+             ════════════════════════════════════════════════════════ -->
+        <section class="hero" id="hero">
+            <p class="hero-role mono" id="heroRole" data-bind="role">Software Engineer</p>
 
-                    <!-- ============================================
-                         SKILLS TAB - Static Grid Layout
-                         
-                         Clean grid of skill icons without animation
-                         for better clarity and readability
-                         ============================================ -->
-                    <div class="tab-contents active-tab" id="skills">
-                        <ul>
-                            <li><span>Technical Skills</span></li>
-                        </ul>
+            <h1 class="hero-name" id="heroName">
+                <span class="line"><span class="line-in">Muhammad</span></span>
+                <span class="line"><span class="line-in"><em>Hafizh</em> Rifan</span></span>
+            </h1>
 
-                        <!-- Languages -->
-                        <p class="skills-label">Languages</p>
-                        <div class="skills-grid">
-                            <div class="skill-item">
-                                <img src="images/html-5-svgrepo-com.svg" alt="HTML5" class="skill-svg">
-                                <span>HTML5</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/css-3-svgrepo-com.svg" alt="CSS3" class="skill-svg">
-                                <span>CSS3</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/javascript-svgrepo-com.svg" alt="JavaScript" class="skill-svg">
-                                <span>JavaScript</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/python-svgrepo-com.svg" alt="Python" class="skill-svg">
-                                <span>Python</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/cpp-svgrepo-com.svg" alt="C++" class="skill-svg">
-                                <span>C++</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/php-svgrepo-com.svg" alt="Kotlin" class="skill-svg">
-                                <span>PHP</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/kotlin-svgrepo-com.svg" alt="Kotlin" class="skill-svg">
-                                <span>Kotlin</span>
-                            </div>
-                        </div>
+            <div class="hero-meta">
+                <span class="status" id="status" data-state="on">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <span data-bind="availableLabel">Open to internships</span>
+                </span>
 
-                        <!-- Frameworks & Libraries -->
-                        <p class="skills-label">Frameworks & Libraries</p>
-                        <div class="skills-grid">
-                            <div class="skill-item">
-                                <img src="images/laravel-svgrepo-com.svg" alt="Laravel" class="skill-svg">
-                                <span>Laravel</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/react-svgrepo-com.svg" alt="React.js" class="skill-svg">
-                                <span>React.js</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/tailwind-svgrepo-com.svg" alt="Tailwind" class="skill-svg">
-                                <span>Tailwind CSS</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/flutter-svgrepo-com.svg" alt="Flutter" class="skill-svg">
-                                <span>Flutter</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/compose.png" alt="Flutter" class="skill-svg">
-                                <span>Compose</span>
-                            </div>
-                        </div>
+                <span class="clock mono" id="clock">
+                    <span data-bind="location">Jakarta, Indonesia</span>
+                    <span class="clock-time" id="clockTime">--:--:--</span>
+                </span>
 
-                        <!-- Tools -->
-                        <p class="skills-label">Tools</p>
-                        <div class="skills-grid">
-                            <div class="skill-item">
-                                <img src="images/git-svgrepo-com.svg" alt="Git" class="skill-svg">
-                                <span>Git</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/github-svgrepo-com.svg" alt="GitHub" class="skill-svg">
-                                <span>GitHub</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/vscode-svgrepo-com.svg" alt="VS Code" class="skill-svg">
-                                <span>VS Code</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/android-studio-icon.webp" alt="VS Code" class="skill-svg">
-                                <span>Android Studio</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/mysql-svgrepo-com.svg" alt="MySQL" class="skill-svg">
-                                <span>MySQL</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/adobe-premiere-svgrepo-com.svg" alt="Premiere Pro" class="skill-svg">
-                                <span>Premiere Pro</span>
-                            </div>
-                            <div class="skill-item">
-                                <img src="images/adobe-after-effects-svgrepo-com.svg" alt="After Effects"
-                                    class="skill-svg">
-                                <span>After Effects</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="tab-contents" id="experience">
-                        <ul class="experience-list">
-                            <li>
-                                <span>2025 June </span><br>
-                                <strong>Project-Based Frontend Developer</strong>
-
-                                <ul class="bullet-points">
-                                    <li>Designed and developed a responsive frontend website using HTML, CSS, and
-                                        vanilla JavaScript.</li>
-                                    <li>Completed full development lifecycle — layout, styling, interactivity, and
-                                        deployment.</li>
-                                    <li>Deployed and maintained the site using Netlify.</li>
-                                </ul>
-                            </li>
-
-                            <li>
-                                <span>2024 December </span><br>
-                                <strong>Freelance Video Editor</strong>
-
-                                <ul class="bullet-points">
-                                    <li>Worked with a 700k+ subscriber YouTube channel reaching 4+ million views.</li>
-                                    <li>Edited 50+ long-form and short-form videos.</li>
-                                    <li>Developed strong skills in deadline management, client communication and
-                                        iterative feedback handling.</li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="tab-contents" id="education">
-                        <ul>
-                            <li><span>Expected Graduation: 2027</span><br>Bachelor of Computer Science in Universitas
-                                Negeri Jakarta (UNJ)<br>
-
-                                Current Cumulative GPA: 3.69 / 4.00
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================
-         PROJECTS SECTION
-         
-         Each card uses scroll-animate with stagger
-         classes for sequential animation on scroll
-         ============================================ -->
-    <div id="services">
-        <div class="container">
-            <h1 class="sub-title scroll-animate">My Projects</h1>
-            <div class="services-list">
-                <!-- Project 1: TaxFlow -->
-                <div class="project-card scroll-animate stagger-1">
-                    <img src="images/taxflow-logo.png" alt="TaxFlow Logo" class="project-logo">
-                    <h2>TaxFlow - Tax Management Website</h2>
-                    <p class="tech-stack">Laravel Blade • PHP • Tailwind CSS • MySQL</p>
-                    <p>An attempt at creating a full-stack web application- a web-based tax management system supporting online tax payments and e-Filing workflows.
-                        Implemented structured backend logic with database integration for efficient data handling.</p>
-                    <div class="project-buttons">
-                        <a href="https://github.com/hafzrfn/Taxflow" target="_blank" class="project-btn primary">
-                            <i class="fab fa-github"></i> GitHub
-                        </a>
-                        <!-- <a href="#" class="project-btn secondary">
-                            <i class="fas fa-external-link-alt"></i> Live Site
-                        </a> -->
-                    </div>
-                </div>
-
-                <!-- Project 2: Nutra -->
-                <div class="project-card scroll-animate stagger-2">
-                    <img src="images/nutrapng.png" alt="Nutra Logo" class="project-logo">
-                    <h2>Nutra - Calorie Tracker App</h2>
-                    <p class="tech-stack">Kotlin Jetpack Compose • Android Studio</p>
-                    <p>Mobile application for tracking daily caloric intake, measured in calories and macronutrients
-                        such as carbs, fats, proteins in grams. Implemented main UI through Android Studio using
-                        Kotlin Jetpack Compose.</p>
-                    <div class="project-buttons">
-                        <a href="https://github.com/hafzrfn/calorietracker" target="_blank" class="project-btn primary">
-                            <i class="fab fa-github"></i> GitHub
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Project 3: Quickbites.id -->
-                <div class="project-card scroll-animate stagger-3">
-                    <img src="images/Quick Bites (1).png" alt="Quickbites Logo" class="project-logo">
-                    <h2>Quickbites.id</h2>
-                    <p class="tech-stack">HTML • JavaScript • Tailwind CSS</p>
-                    <p>Frontend e-Commerce website built with Tailwind CSS that allows customers to directly message
-                        sellers through WhatsApp for seamless order placement and communication.</p>
-                    <div class="project-buttons">
-                        <a href="https://github.com/hafzrfn/quickbites" target="_blank" class="project-btn primary">
-                            <i class="fab fa-github"></i> GitHub
-                        </a>
-                        <a href="https://quickbitesid.netlify.app/" target="_blank" class="project-btn secondary">
-                            <i class="fas fa-external-link-alt"></i> Live Site
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Project 4: DineWithUswah -->
-                <div class="project-card scroll-animate stagger-4">
-                    <img src="images/logodine.jpg" alt="DineWithUswah Logo" class="project-logo">
-                    <h2>DineWithUswah</h2>
-                    <p class="tech-stack">HTML • CSS • JavaScript</p>
-                    <p>Frontend e-Commerce website using vanilla HTML, CSS and JavaScript. Features a clean design
-                        that allows customers to directly message
-                        sellers through WhatsApp for seamless order placement and communication.</p>
-                    <div class="project-buttons">
-                        <a href="https://github.com/hafzrfn/dinewithuswah" target="_blank" class="project-btn primary">
-                            <i class="fab fa-github"></i> GitHub
-                        </a>
-                        <a href="https://dinewithuswah.netlify.app/" target="_blank" class="project-btn secondary">
-                            <i class="fas fa-external-link-alt"></i> Live Site
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================
-         CONTACT SECTION - Centered Layout
-         
-         - Removed: form, download CV, Instagram/Twitter/Facebook
-         - Added: WhatsApp Message Me button
-         - Only keeping: LinkedIn & GitHub
-         ============================================ -->
-    <div id="contact">
-        <div class="container">
-            <div class="contact-center scroll-animate">
-                <h1 class="sub-title">Contact Me</h1>
-                <p><i class="fas fa-paper-plane"></i>hafizhrifan0515@gmail.com</p>
-                <p><i class="fas fa-phone-square-alt"></i>+62 813 1177 7595</p>
-
-                <div class="social-icons">
-                    <!-- Edit these href links with your actual profile URLs -->
-                    <a href="https://www.linkedin.com/in/muhammad-hafizh-rifan-931611294/" title="LinkedIn" target="_blank">
-                        <i class="fa-brands fa-linkedin"></i>
-                    </a>
-                    <a href="https://github.com/hafzrfn" title="GitHub" target="_blank">
-                        <i class="fa-brands fa-github"></i>
-                    </a>
-                </div>
-
-                <!-- WhatsApp Message Button -->
-                <a href="https://wa.me/6281311777595" class="message-btn" target="_blank">
-                    <i class="fab fa-whatsapp"></i>
-                    Message Me
+                <a class="hero-cv" id="heroCv" href="#" target="_blank" rel="noopener">
+                    <span data-bind="cvLabel">View CV</span>
+                    <svg viewBox="0 0 12 12" aria-hidden="true">
+                        <path d="M2.5 9.5 9.5 2.5M4 2.5h5.5V8" />
+                    </svg>
                 </a>
             </div>
-        </div>
-        <div class="copyright">
-            <p>Copyright hafzrfn. Made with <i class="fas fa-heart"></i> by Hafizh Rifan</p>
-        </div>
-    </div>
 
-    <!-- ============================================
-         JAVASCRIPT
-         
-         All JavaScript is organized in script.js for:
-         - Tab switching (Skills/Experience/Education)
-         - Mobile menu toggle (hamburger animation)
-         - Scroll animations (IntersectionObserver)
-         - Parallax background effect (desktop only)
-         ============================================ -->
-    <script src="script.js"></script>
+            <div class="hero-scroll mono" aria-hidden="true">
+                <span>Scroll</span>
+                <span class="hero-scroll-rule"></span>
+            </div>
+        </section>
 
+        <!-- ════════════════════════════════════════════════════════
+             01 · PROFILE
+             ════════════════════════════════════════════════════════ -->
+        <section class="section" id="profile">
+            <div class="section-head reveal">
+                <span class="section-index mono">01</span>
+                <h2 class="section-title">Profile</h2>
+            </div>
+
+            <div class="profile-grid">
+                <dl class="facts reveal" id="facts"></dl>
+
+                <div class="profile-body">
+                    <p class="profile-lead reveal" data-bind="aboutLead"></p>
+                    <p class="profile-text reveal" data-bind="aboutBody"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════════════════════════════════════════════════════════
+             02 · EXPERIENCE
+             ════════════════════════════════════════════════════════ -->
+        <section class="section" id="experience">
+            <div class="section-head reveal">
+                <span class="section-index mono">02</span>
+                <h2 class="section-title">Experience</h2>
+            </div>
+
+            <ol class="rows" id="experienceList"></ol>
+        </section>
+
+        <!-- ════════════════════════════════════════════════════════
+             03 · WORK
+             ════════════════════════════════════════════════════════ -->
+        <section class="section" id="work">
+            <div class="section-head reveal">
+                <span class="section-index mono">03</span>
+                <h2 class="section-title">Selected work</h2>
+            </div>
+
+            <ol class="work" id="workList"></ol>
+
+            <!-- Floating preview that trails the cursor on desktop -->
+            <div class="work-preview" id="workPreview" aria-hidden="true">
+                <img alt="" id="workPreviewImg">
+            </div>
+        </section>
+
+        <!-- ════════════════════════════════════════════════════════
+             04 · STACK
+             ════════════════════════════════════════════════════════ -->
+        <section class="section" id="stack">
+            <div class="section-head reveal">
+                <span class="section-index mono">04</span>
+                <h2 class="section-title">Stack</h2>
+            </div>
+
+            <div class="stack" id="stackList"></div>
+        </section>
+
+        <!-- ════════════════════════════════════════════════════════
+             05 · EDUCATION
+             ════════════════════════════════════════════════════════ -->
+        <section class="section" id="education">
+            <div class="section-head reveal">
+                <span class="section-index mono">05</span>
+                <h2 class="section-title">Education</h2>
+            </div>
+
+            <ol class="rows" id="educationList"></ol>
+        </section>
+
+        <!-- ════════════════════════════════════════════════════════
+             06 · CONTACT
+             ════════════════════════════════════════════════════════ -->
+        <section class="section section--contact" id="contact">
+            <div class="section-head reveal">
+                <span class="section-index mono">06</span>
+                <h2 class="section-title">Contact</h2>
+            </div>
+
+            <p class="contact-lede reveal">
+                Have something in mind, or a place I might fit?
+                <span class="serif">Say hello.</span>
+            </p>
+
+            <a class="contact-email reveal" id="contactEmail" href="#">
+                <span data-bind="email"></span>
+            </a>
+
+            <div class="contact-meta reveal">
+                <a class="contact-phone" id="contactPhone" href="#" data-bind="phone"></a>
+                <nav class="socials" id="socials" aria-label="Social profiles"></nav>
+            </div>
+
+            <a class="wa" id="whatsapp" href="#" target="_blank" rel="noopener">
+                <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                Message on WhatsApp
+            </a>
+        </section>
+    </main>
+
+    <footer class="foot">
+        <span data-bind="footerNote"></span>
+        <span class="mono" data-bind="footerCredit"></span>
+    </footer>
+
+    <!-- ════════════════════════════════════════════════════════════
+         TEMPLATES — cloned and filled by app.js from content.js.
+         You should not need to edit anything below this line.
+         ════════════════════════════════════════════════════════════ -->
+
+    <template id="tpl-fact">
+        <div class="fact">
+            <dt class="mono"></dt>
+            <dd></dd>
+        </div>
+    </template>
+
+    <template id="tpl-row">
+        <li class="row reveal">
+            <span class="row-period mono"></span>
+            <div class="row-body">
+                <h3 class="row-title"></h3>
+                <p class="row-org mono"></p>
+                <ul class="row-points"></ul>
+            </div>
+        </li>
+    </template>
+
+    <template id="tpl-work">
+        <li class="work-item reveal">
+            <a class="work-row" href="#" target="_blank" rel="noopener">
+                <span class="work-index mono"></span>
+                <span class="work-title"></span>
+                <span class="work-stack mono"></span>
+                <span class="work-year mono"></span>
+                <svg class="work-arrow" viewBox="0 0 14 14" aria-hidden="true">
+                    <path d="M3 11 11 3M4.5 3H11v6.5" />
+                </svg>
+            </a>
+            <div class="work-detail">
+                <img class="work-thumb" alt="" loading="lazy" decoding="async">
+                <div class="work-detail-body">
+                    <p class="work-blurb"></p>
+                    <div class="work-links"></div>
+                </div>
+            </div>
+        </li>
+    </template>
+
+    <template id="tpl-stack-group">
+        <div class="stack-group reveal">
+            <p class="stack-label mono"></p>
+            <ul class="stack-items"></ul>
+        </div>
+    </template>
+
+    <template id="tpl-stack-item">
+        <li class="stack-item">
+            <img alt="" loading="lazy" decoding="async">
+            <span></span>
+        </li>
+    </template>
+
+    <script src="app.js"></script>
 </body>
 
 </html>
