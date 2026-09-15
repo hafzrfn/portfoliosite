@@ -12,7 +12,7 @@
  *     4. Hero — name headline, decode effect, live clock
  *     5. Work index — sibling dimming + cursor-trailing preview
  *     6. Scroll reveals
- *     7. Pixel field — reactive phosphor-grid background
+ *     7. Pixel field — dithered wallpaper + reactive phosphor grid
  *
  * ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -56,7 +56,12 @@
     function renderProfile(p) {
         if (!p) return;
 
-        if (p.name) document.title = p.name.split(' ').slice(-2).join(' ') + ' — ' + (p.role || 'Portfolio');
+        // Tab title uses the hero headline — that's the name people actually
+        // see on the page. Falls back to the full legal name in `name`.
+        var shortName = Array.isArray(p.headline) && p.headline.length
+            ? p.headline.join(' ').replace(/\[\[|\]\]/g, '').trim()
+            : p.name;
+        if (shortName) document.title = shortName + ' — ' + (p.role || 'Portfolio');
 
         // Headline. [[word]] marks the accent word.
         if (Array.isArray(p.headline) && p.headline.length) {
@@ -555,7 +560,7 @@
                 entry.target.classList.add('is-in');
                 io.unobserve(entry.target);   // fire once, never replay
             });
-        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        }, { threshold: 0.05, rootMargin: '0px 0px 0px 0px' });
 
         targets.forEach(function (el) { io.observe(el); });
     }
@@ -563,17 +568,19 @@
 
     /* ── 7 · Pixel field ──────────────────────────────────────────────────── */
 
-    // A fine mesh of squares covering the whole viewport, dark and inert
-    // until the cursor sweeps across it — each cell then glows and decays
-    // like phosphor on an old CRT. A click sends a ring pulse through the
-    // grid. This is the site's own name made literal: Graphite & Phosphor.
+    // A fine mesh of squares covering the whole viewport. Two things live on
+    // it, both drawn as the same 8px squares so the motif reads as one thing:
     //
-    // Colour comes from the live --accent / --accent-pale custom properties,
-    // read once at startup, so retuning the palette retunes this for free.
+    //   · a dithered icy-blue wallpaper behind the landing page, which fades
+    //     out to pure black as you scroll down into the site proper;
+    //   · a reactive phosphor layer — the cursor leaves a glowing trail that
+    //     decays like a CRT, and a click sends a pulse through the grid.
+    //
+    // Colour comes from the live --accent* custom properties, read once at
+    // startup, so retuning the palette retunes all of this for free.
     function initPixelField() {
         var canvas = document.getElementById('pixelField');
         if (!canvas || !canvas.getContext) return;
-        if (reduceMotion) return;   // the static dot grid still gives texture
 
         var ctx = canvas.getContext('2d', { alpha: true });
         var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -581,6 +588,7 @@
         var tokens = getComputedStyle(document.documentElement);
         var trailColor = hexToRgb(tokens.getPropertyValue('--accent')) || { r: 156, g: 220, b: 255 };
         var crestColor = hexToRgb(tokens.getPropertyValue('--accent-pale')) || trailColor;
+        var deepColor = hexToRgb(tokens.getPropertyValue('--accent-deep')) || trailColor;
 
         var CELL = 8;           // grid pitch, in CSS px
         var DRAW = 5;           // square drawn per cell — smaller than CELL leaves a gap
@@ -589,9 +597,13 @@
         var EPSILON = 0.01;
         var RIPPLE_LIFE = 0.6;  // seconds a click pulse lives for
         var RIPPLE_SPEED = 560; // px/sec it expands at — life × speed caps its reach
+        var BANDS = 5;          // quantisation steps in the wallpaper gradient
+        var WALL_ALPHA = 0.62;  // wallpaper opacity at its brightest cell
+        var FADE_OVER = 0.9;    // viewport-heights of scroll before it's fully black
 
         var dpr = Math.min(window.devicePixelRatio || 1, 2);
         var cols = 0, rows = 0, cells = null, w = 0, h = 0;
+        var resizeTimer;
 
         function resize() {
             w = window.innerWidth;
@@ -604,10 +616,296 @@
             canvas.style.width = w + 'px';
             canvas.style.height = h + 'px';
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            sizeWallpaper();
+            paintWallpaper(staticMode ? 0 : (window.performance ? performance.now() : 0));
+            if (staticMode) paintStatic();
         }
+
+        /* ── Wallpaper ─────────────────────────────────────────────────────
+           A dithered icy-blue field on the same cell pitch as the reactive
+           layer, so the two read as one material. It drifts: the bloom at its
+           centre wanders, and two slow interference waves roll through the
+           intensity, so cells cross band boundaries and the stipple breathes.
+
+           It lives on an offscreen canvas that is repainted a few times a
+           second and composited every frame at a scroll-driven alpha. Two
+           things keep that affordable at ~20k cells:
+
+             · the waves are built as 1-D row/column tables once per repaint,
+               so a cell costs a couple of multiplies rather than its own sin();
+             · cells are bucketed by colour band and filled as one path per
+               band, so fillStyle is set BANDS times per repaint instead of
+               once per cell — parsing 10k colour strings a frame is what
+               actually makes this kind of effect slow. */
+
+        var wall = document.createElement('canvas');
+        var wctx = wall.getContext('2d');
+
+        var PULL_RADIUS = 165;  // px the cursor's grab reaches into the wallpaper
+        var PULL_MAX = 15;      // px a cell travels toward the cursor at most
+        var SPRING = 0.11;      // how hard a cell is pulled to its target
+        var DAMP = 0.83;        // velocity retained per step — higher wobbles longer
+
+        var WALL_FPS = 22;                         // wallpaper repaints per second
+        var WALL_STEP = 1000 / WALL_FPS;
+        var lastWall = -1e9;
+
+        // Row/column wave tables and per-band cell buckets, sized on resize.
+        var colA = null, colB = null, rowA = null, rowB = null;
+        var buckets = [];
+        var wallPalette = [];
+
+        // Per-cell spring state for the cursor grab: offset from home, and the
+        // velocity carrying it there and back.
+        var dispX = null, dispY = null, velX = null, velY = null;
+        var anyDisp = false;
+
+        // 4×4 ordered-dither threshold matrix. Quantising the ramp into a few
+        // bands and letting this decide who rounds up breaks the transitions
+        // into pixel stipple, instead of the smooth blur a CSS gradient gives.
+        var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
+        // Faint end stays a saturated glacier blue and only goes pale at the
+        // crest; mixing straight to white washes the whole field out to grey.
+        function wallpaperColor(v) {
+            return v < 0.55
+                ? mix(deepColor, trailColor, v / 0.55)
+                : mix(trailColor, crestColor, (v - 0.55) / 0.45);
+        }
+
+        // Sizing is separate from painting: setting canvas.width resets the
+        // context, so it only happens on resize, not on every repaint.
+        function sizeWallpaper() {
+            wall.width = canvas.width;
+            wall.height = canvas.height;
+            wctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            colA = new Float32Array(cols);
+            colB = new Float32Array(cols);
+            rowA = new Float32Array(rows);
+            rowB = new Float32Array(rows);
+
+            var n = cols * rows;
+            dispX = new Float32Array(n);
+            dispY = new Float32Array(n);
+            velX = new Float32Array(n);
+            velY = new Float32Array(n);
+
+            buckets.length = 0;
+            for (var b = 0; b <= BANDS; b++) buckets.push([]);
+
+            if (!wallPalette.length) {
+                for (var p = 0; p <= BANDS; p++) {
+                    var v = p / BANDS;
+                    var c = wallpaperColor(v);
+                    wallPalette.push('rgba(' + c.r + ',' + c.g + ',' + c.b + ',' +
+                        (v * WALL_ALPHA).toFixed(3) + ')');
+                }
+            }
+        }
+
+        /* One spring step per animation frame. Cells inside the cursor's reach
+           are given a target offset pointing at it; everything else targets
+           home. The same spring carries them both ways, so the grab and the
+           release are the same motion — that's what makes letting go feel
+           like letting go rather than a cut. */
+        function stepDisplacement() {
+            var pulling = hasPointer && wallpaperFade() > 0.002;
+            var px = pointerX, py = pointerY;
+            var moved = false;
+
+            // Only cells in the cursor's bounding box can be targeted; the
+            // rest just relax, and untouched ones bail out immediately.
+            var c0 = 0, c1 = -1, r0 = 0, r1 = -1;
+            if (pulling) {
+                c0 = Math.max(0, Math.floor((px - PULL_RADIUS) / CELL));
+                c1 = Math.min(cols - 1, Math.ceil((px + PULL_RADIUS) / CELL));
+                r0 = Math.max(0, Math.floor((py - PULL_RADIUS) / CELL));
+                r1 = Math.min(rows - 1, Math.ceil((py + PULL_RADIUS) / CELL));
+            }
+
+            for (var row = 0; row < rows; row++) {
+                var inRows = row >= r0 && row <= r1;
+                var base = row * cols;
+
+                for (var col = 0; col < cols; col++) {
+                    var idx = base + col;
+                    var dx = dispX[idx], dy = dispY[idx];
+                    var vx = velX[idx], vy = velY[idx];
+                    var tx = 0, ty = 0;
+
+                    if (inRows && col >= c0 && col <= c1) {
+                        var ox = px - (col * CELL + CELL / 2);
+                        var oy = py - (row * CELL + CELL / 2);
+                        var d2 = ox * ox + oy * oy;
+                        if (d2 < PULL_RADIUS * PULL_RADIUS) {
+                            var d = Math.sqrt(d2) || 1;
+                            var u = d / PULL_RADIUS;
+
+                            // Soft core. The pull peaks a third of the way out
+                            // and falls back to zero AT the pointer, so cells
+                            // never converge on a single point and pile up —
+                            // that heap was what made the overlap read dense.
+                            // Scaled by 6.75 so the peak still equals PULL_MAX.
+                            var pull = PULL_MAX * 6.75 * u * (1 - u) * (1 - u);
+
+                            tx = ox / d * pull;
+                            ty = oy / d * pull;
+                        }
+                    }
+
+                    if (tx === 0 && ty === 0 && dx === 0 && dy === 0 && vx === 0 && vy === 0) continue;
+
+                    vx = (vx + (tx - dx) * SPRING) * DAMP;
+                    vy = (vy + (ty - dy) * SPRING) * DAMP;
+                    dx += vx;
+                    dy += vy;
+
+                    // Snap to rest so settled cells drop out of the loop.
+                    if (dx * dx + dy * dy < 0.0025 && vx * vx + vy * vy < 0.0025) {
+                        dx = dy = vx = vy = 0;
+                    } else {
+                        moved = true;
+                    }
+
+                    dispX[idx] = dx; dispY[idx] = dy;
+                    velX[idx] = vx; velY[idx] = vy;
+                }
+            }
+
+            anyDisp = moved;
+        }
+
+        function paintWallpaper(ms) {
+            wctx.clearRect(0, 0, w, h);
+
+            var t = ms * 0.001;
+
+            // The bloom's centre wanders, so the light never sits still.
+            var cx = 0.86 + Math.sin(t * 0.11) * 0.10;
+            var cy = 0.34 + Math.cos(t * 0.083) * 0.12;
+
+            var col2, row2;
+            for (col2 = 0; col2 < cols; col2++) {
+                colA[col2] = Math.sin(col2 * 0.045 + t * 0.62);
+                colB[col2] = Math.sin(col2 * 0.019 - t * 0.34);
+            }
+            for (row2 = 0; row2 < rows; row2++) {
+                rowA[row2] = Math.sin(row2 * 0.037 - t * 0.47);
+                rowB[row2] = Math.sin(row2 * 0.016 + t * 0.28);
+            }
+
+            for (var z = 0; z <= BANDS; z++) buckets[z].length = 0;
+
+            var offset = (CELL - DRAW) / 2;
+
+            for (var row = 0; row < rows; row++) {
+                var ny = (row * CELL + CELL / 2) / h;
+                var fall = 1 - Math.pow(ny, 1.35);
+                if (fall <= 0) continue;
+
+                var ra = rowA[row], rb = rowB[row];
+
+                var rowBase = row * cols;
+
+                for (var col = 0; col < cols; col++) {
+                    var nx = (col * CELL + CELL / 2) / w;
+
+                    var dx = (nx - cx) * 0.92;
+                    var dy = (ny - cy) * 1.45;
+                    var bloom = 1 - Math.sqrt(dx * dx + dy * dy) / 0.80;
+                    bloom = bloom > 0 ? bloom * bloom : 0;
+
+                    var sweep = nx * nx * 0.3;
+                    var wave = colA[col] * ra * 0.6 + colB[col] * rb * 0.4;
+
+                    var i = (bloom + sweep) * fall * (0.78 + wave * 0.42);
+
+                    // A grabbed cell lifts slightly, so it still reads as
+                    // joining the cursor — but only slightly. Cells are already
+                    // closer together here, and brightening a crowded patch is
+                    // what turned the overlap into a hot spot.
+                    var idx = rowBase + col;
+                    var ox = dispX[idx], oy = dispY[idx];
+                    if (ox !== 0 || oy !== 0) {
+                        var mag = Math.sqrt(ox * ox + oy * oy) / PULL_MAX;
+                        i += (mag > 1 ? 1 : mag) * 0.14;
+                    }
+
+                    if (i < 0.1) continue;
+                    if (i > 1) i = 1;
+
+                    var scaled = i * BANDS;
+                    var band = scaled | 0;
+                    if (scaled - band > BAYER[(row & 3) * 4 + (col & 3)] * 0.0625) band++;
+                    if (band <= 0) continue;
+                    if (band > BANDS) band = BANDS;
+
+                    buckets[band].push(col * CELL + offset + ox, row * CELL + offset + oy);
+                }
+            }
+
+            for (var f = 1; f <= BANDS; f++) {
+                var pts = buckets[f];
+                if (!pts.length) continue;
+                wctx.fillStyle = wallPalette[f];
+                wctx.beginPath();
+                for (var k = 0; k < pts.length; k += 2) {
+                    wctx.rect(pts[k], pts[k + 1], DRAW, DRAW);
+                }
+                wctx.fill();
+            }
+        }
+
+        // 1 at the top of the page, 0 once the landing page is behind you.
+        function wallpaperFade() {
+            var t = window.scrollY / (h * FADE_OVER);
+            return t >= 1 ? 0 : Math.pow(1 - t, 1.4);
+        }
+
+        function drawWallpaper(ms) {
+            var fade = wallpaperFade();
+            if (fade <= 0.002) return;   // scrolled past — don't even repaint
+
+            // The drift alone is slow enough for 22fps, but a cursor grab has
+            // to track the pointer, so repaint every frame while one is live.
+            // stepDisplacement() has already run this frame, so anyDisp is
+            // current — no need to also watch hasPointer, which stays true
+            // for as long as the pointer is anywhere in the window.
+            var step = anyDisp ? 0 : WALL_STEP;
+            if (ms - lastWall >= step) {
+                paintWallpaper(ms);
+                lastWall = ms;
+            }
+
+            ctx.globalAlpha = fade;
+            ctx.drawImage(wall, 0, 0, w, h);
+            ctx.globalAlpha = 1;
+        }
+
+        /* Reduced motion: keep the wallpaper, drop everything that moves. */
+        var staticMode = reduceMotion;
+
+        function paintStatic() {
+            ctx.clearRect(0, 0, w, h);
+            var fade = wallpaperFade();
+            if (fade <= 0.002) return;
+            ctx.globalAlpha = fade;
+            ctx.drawImage(wall, 0, 0, w, h);
+            ctx.globalAlpha = 1;
+        }
+
         resize();
 
-        var resizeTimer;
+        if (staticMode) {
+            window.addEventListener('scroll', paintStatic, { passive: true });
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(resize, 150);
+            });
+            return;
+        }
+
         window.addEventListener('resize', function () {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(resize, 150);
@@ -716,7 +1014,16 @@
                 stampRing(r.x, r.y, age * RIPPLE_SPEED, 20, (1 - age / RIPPLE_LIFE) * 0.72);
             }
 
+            stepDisplacement();
+
             ctx.clearRect(0, 0, w, h);
+            drawWallpaper(now);
+
+            // Over the landing page the trail lands on an already-lit field,
+            // and the two summing is the third thing that made the overlap
+            // heavy. Ease the trail back where the wallpaper is bright; below
+            // the fold, where there is no wallpaper, it stays full strength.
+            var trailAlpha = 0.5 * (1 - wallpaperFade() * 0.45);
 
             for (var idx = 0; idx < cells.length; idx++) {
                 var v = cells[idx];
@@ -726,7 +1033,7 @@
                 var row = (idx / cols) | 0;
                 var c = v > 0.7 ? crestColor : trailColor;
 
-                ctx.fillStyle = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + (v * 0.5).toFixed(3) + ')';
+                ctx.fillStyle = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + (v * trailAlpha).toFixed(3) + ')';
                 ctx.fillRect(col * CELL + (CELL - DRAW) / 2, row * CELL + (CELL - DRAW) / 2, DRAW, DRAW);
 
                 cells[idx] = v * DECAY;
@@ -736,6 +1043,15 @@
         }
 
         requestAnimationFrame(frame);
+    }
+
+    // Blend two {r,g,b} colours; t = 0 gives a, t = 1 gives b.
+    function mix(a, b, t) {
+        return {
+            r: Math.round(a.r + (b.r - a.r) * t),
+            g: Math.round(a.g + (b.g - a.g) * t),
+            b: Math.round(a.b + (b.b - a.b) * t)
+        };
     }
 
     function hexToRgb(hex) {

@@ -237,6 +237,23 @@ ol {
     transition: background .4s var(--ease), border-color .4s var(--ease), backdrop-filter .4s var(--ease);
 }
 
+/* Scrim behind the bar. The pixel wallpaper is brightest along the top of the
+   landing page, which is exactly where the nav sits — this keeps the links
+   readable against it without dimming the wallpaper itself. */
+.nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(10, 11, 13, .92), rgba(10, 11, 13, 0));
+}
+
+.nav.is-stuck::before {
+    opacity: 0;
+    transition: opacity .4s var(--ease);
+}
+
 .nav.is-stuck {
     background: rgba(11, 11, 12, .72);
     backdrop-filter: blur(14px) saturate(140%);
@@ -248,7 +265,7 @@ ol {
     font-family: var(--mono);
     font-size: .8125rem;
     font-weight: 500;
-    letter-spacing: .18em;
+    letter-spacing: .1em;
     position: relative;
     padding-right: .6rem;
 }
@@ -922,11 +939,13 @@ ol {
     grid-template-rows: 0fr;
     transition: grid-template-rows .6s var(--ease), opacity .4s var(--ease);
     opacity: 0;
+    pointer-events: none;
 }
 
 .work-item.is-hovered .work-detail {
     grid-template-rows: 1fr;
     opacity: 1;
+    pointer-events: auto;
 }
 
 .work-detail-body {
@@ -1427,12 +1446,9 @@ ol {
         animation: none;
     }
 
-    /* The pixel-field's entire purpose is motion; app.js already skips
-       starting it under reduced motion, this just guarantees no stray
-       paint if a canvas somehow persists across a soft navigation. */
-    .pixel-field {
-        display: none;
-    }
+    /* The pixel-field stays visible under reduced motion — app.js drops the
+       cursor trail, twinkle and click pulse, and paints only the static
+       wallpaper, which changes solely with scroll position. */
 
     .hero-name .line-in {
         transform: none;
@@ -1455,5 +1471,6 @@ ol {
     .work-detail {
         grid-template-rows: 1fr;
         opacity: 1;
+        pointer-events: auto;
     }
 }

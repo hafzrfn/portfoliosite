@@ -41,7 +41,7 @@ window.SITE = {
     availableLabel: "Looking for Opportunities",
 
     // Link to your CV. Leave as "" to hide the button entirely.
-    cvUrl: "https://docs.google.com/document/d/14u-yXx91URZ4HZ2_fvbdaYOk5nNHSyxq/edit",
+    cvUrl: "https://docs.google.com/document/d/14u-yXx91URZ4HZ2_fvbdaYOk5nNHSyxq/preview",
     cvLabel: "View CV",
 
     // Contact details, shown in the last section.
@@ -173,9 +173,9 @@ window.SITE = {
 
   /* ─────────────────────────────────────────────────────────────────────────
      STACK  —  grouped tools. Icons are greyscale and colour in on hover.
-     Note: SQL, Vue.js, Nuxt.js, Flask, PostgreSQL, Pandas/NumPy/Scikit-learn,
-     Figma, Vercel and Netlify are on the résumé but skipped here — no icon
-     file for them in images/ yet. Drop one in and add a line to include it.
+     Note: SQL, Nuxt.js, Flask, Pandas/NumPy/Scikit-learn, Figma, Vercel and
+     Netlify are on the résumé but skipped here — no icon file for them in
+     images/ yet. Drop one in and add a line to include it.
      ───────────────────────────────────────────────────────────────────────── */
   stack: [
     {
@@ -192,7 +192,9 @@ window.SITE = {
     {
       group: "Frameworks",
       items: [
+        { name: "Next.js", icon: "images/nextjs.svg" },
         { name: "React", icon: "images/react-svgrepo-com.svg" },
+        { name: "Vue.js", icon: "images/vuejs.svg" },
         { name: "Laravel", icon: "images/laravel-svgrepo-com.svg" },
         { name: "Tailwind CSS", icon: "images/tailwind-svgrepo-com.svg" },
         { name: "Compose", icon: "images/compose.png" }
@@ -201,12 +203,15 @@ window.SITE = {
     {
       group: "Databases",
       items: [
-        { name: "MySQL", icon: "images/mysql-svgrepo-com.svg" }
+        { name: "PostgreSQL", icon: "images/postgresql.svg" },
+        { name: "MySQL", icon: "images/mysql-svgrepo-com.svg" },
+        { name: "Prisma", icon: "images/prisma.svg" }
       ]
     },
     {
       group: "Tools",
       items: [
+        { name: "Docker", icon: "images/docker.svg" },
         { name: "Git", icon: "images/git-svgrepo-com.svg" },
         { name: "GitHub", icon: "images/github-svgrepo-com.svg" },
         { name: "VS Code", icon: "images/vscode-svgrepo-com.svg" },
