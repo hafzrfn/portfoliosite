@@ -641,7 +641,7 @@
         var wall = document.createElement('canvas');
         var wctx = wall.getContext('2d');
 
-        var PULL_RADIUS = 165;  // px the cursor's grab reaches into the wallpaper
+        var PULL_RADIUS = 140;  // px the cursor's grab reaches into the wallpaper
         var PULL_MAX = 15;      // px a cell travels toward the cursor at most
         var SPRING = 0.11;      // how hard a cell is pulled to its target
         var DAMP = 0.83;        // velocity retained per step — higher wobbles longer
@@ -742,12 +742,21 @@
                             var d = Math.sqrt(d2) || 1;
                             var u = d / PULL_RADIUS;
 
-                            // Soft core. The pull peaks a third of the way out
-                            // and falls back to zero AT the pointer, so cells
-                            // never converge on a single point and pile up —
-                            // that heap was what made the overlap read dense.
-                            // Scaled by 6.75 so the peak still equals PULL_MAX.
-                            var pull = PULL_MAX * 6.75 * u * (1 - u) * (1 - u);
+                            // How much cells crowd is set by how fast the pull
+                            // CHANGES with distance, not by how far it moves
+                            // them. The old curve rose steeply from the pointer,
+                            // so the steepest compression landed exactly at the
+                            // centre and cells piled up there.
+                            //
+                            // u²(1-u)² leaves the pointer with zero slope and
+                            // peaks at mid-radius instead, spreading the same
+                            // travel over a wide ring. Peak density drops from
+                            // roughly 6.7x to 1.8x — below the point where
+                            // neighbouring squares can overlap at all — so the
+                            // cells stay full size and the grid stays natural.
+                            // Scaled by 16 so the peak still equals PULL_MAX.
+                            var uu = u * (1 - u);
+                            var pull = PULL_MAX * 16 * uu * uu;
 
                             tx = ox / d * pull;
                             ty = oy / d * pull;
@@ -825,6 +834,8 @@
                     // joining the cursor — but only slightly. Cells are already
                     // closer together here, and brightening a crowded patch is
                     // what turned the overlap into a hot spot.
+                    // A grabbed cell lifts slightly, so it still reads as
+                    // joining the cursor without turning into a hot spot.
                     var idx = rowBase + col;
                     var ox = dispX[idx], oy = dispY[idx];
                     if (ox !== 0 || oy !== 0) {
@@ -1034,7 +1045,16 @@
                 var c = v > 0.7 ? crestColor : trailColor;
 
                 ctx.fillStyle = 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + (v * trailAlpha).toFixed(3) + ')';
-                ctx.fillRect(col * CELL + (CELL - DRAW) / 2, row * CELL + (CELL - DRAW) / 2, DRAW, DRAW);
+
+                // Ride the same displacement the wallpaper is under. Without
+                // this the trail paints on the undisplaced grid while the
+                // wallpaper around it has moved, and the two misaligned grids
+                // read as one layer sitting on top of another.
+                ctx.fillRect(
+                    col * CELL + (CELL - DRAW) / 2 + dispX[idx],
+                    row * CELL + (CELL - DRAW) / 2 + dispY[idx],
+                    DRAW, DRAW
+                );
 
                 cells[idx] = v * DECAY;
             }
