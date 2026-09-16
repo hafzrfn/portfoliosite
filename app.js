@@ -12,6 +12,7 @@
  *     4. Hero — name headline, decode effect, live clock
  *     5. Work index — sibling dimming + cursor-trailing preview
  *     6. Scroll reveals
+ *     6a. Liquid flood — scroll-scrubbed wave crossfade
  *     6b. Theme — dark/light toggle
  *     7. Pixel field — dithered wallpaper + reactive phosphor grid
  *
@@ -170,6 +171,19 @@
                 ul.remove();
             }
 
+            // Optional link (e.g. portfolio URL) rendered below the bullet points.
+            var link = map.link ? map.link(item) : null;
+            if (link && link.href) {
+                var a = document.createElement('a');
+                a.href = link.href;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.className = 'row-link';
+                a.innerHTML = link.label +
+                    '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 9.5 9.5 2.5M4 2.5h5.5V8"/></svg>';
+                $('.row-body', node).appendChild(a);
+            }
+
             list.appendChild(node);
         });
     }
@@ -286,7 +300,8 @@
             period: function (x) { return x.period; },
             title: function (x) { return x.title; },
             org: function (x) { return x.org; },
-            points: function (x) { return x.points; }
+            points: function (x) { return x.points; },
+            link: function (x) { return x.link || null; }
         });
 
         renderRows('educationList', SITE.education, {
@@ -564,6 +579,107 @@
         }, { threshold: 0.05, rootMargin: '0px 0px 0px 0px' });
 
         targets.forEach(function (el) { io.observe(el); });
+    }
+
+
+    /* ── 6a · Liquid flood ────────────────────────────────────────────────── */
+
+    // A scroll-scrubbed progress value (0 partway through the hero, 1 at the
+    // very end of the carousel), written to --flood. style.css does the
+    // rest: every token is a color-mix() against --flood, and the liquid
+    // wave's transform reads the same variable — so the background tint and
+    // the visible wave-line always agree exactly, because they're the same
+    // number.
+    //
+    // The END is pinned to the carousel's own bottom edge, not a guessed
+    // distance — so the crossfade is *guaranteed* to finish by the time
+    // Profile's real copy arrives, whatever height the carousel ends up
+    // rendering at on a given screen. That's the fix for the old problem:
+    // Profile used to load mid-transition, with both the background and the
+    // ink at some 50/50 blend, so the text was reading dark-on-dark or
+    // light-on-light instead of against real contrast. The carousel is
+    // decorative — a looping wordmark, nothing to actually read — so it can
+    // absorb that wash-out zone instead.
+    //
+    // The START sits just a few px below the very top of the page — flood
+    // begins almost the instant you scroll down, rather than waiting for
+    // any particular point in the hero. This is safe on hero content
+    // specifically because the flood is already well underway by the time
+    // you've scrolled far enough to have left the headline behind: a
+    // graceful fade on your way out reads very differently from the old
+    // Profile bug, which was about text you were meant to be reading for
+    // the first time.
+    function initFlood() {
+        var carousel = $('#carousel');
+        var liquid = $('#liquid');
+        if (!carousel) return;
+
+        var root = document.documentElement;
+        var start = 0, end = 1, current = 0, ticking = false;
+
+        function measure() {
+            var carouselTop = carousel.getBoundingClientRect().top + window.scrollY;
+            start = 48;   // a small dead-zone so idle rubber-band scroll doesn't twitch it
+            end = carouselTop + carousel.offsetHeight;
+        }
+        measure();
+        window.addEventListener('resize', measure);
+
+        function apply(v) {
+            root.style.setProperty('--flood', v.toFixed(4));
+            if (liquid) {
+                // The wave's crest (drawn near the top of its own SVG, see
+                // the markup) geometrically clears the viewport around
+                // v≈0.94 — past that point it's just a flat, unblended
+                // --base-a rectangle covering the whole screen, while the
+                // page's OWN --base is still only ~94-99% blended toward
+                // that same colour. Two independently-computed near-matches,
+                // composited right where the nav's own scrim sits on top, is
+                // exactly what produced the seam under the nav.
+                //
+                // Rather than chase that gap down to the percentage, the
+                // wave fades its own opacity out over the last stretch
+                // (0.76 → 0.86) and is fully hidden by 0.86 — comfortably
+                // before the crest would have cleared, so the mismatched
+                // phase never becomes visible at all. A plain visibility
+                // snap at a single value would still pop, since the crest
+                // is still mid-motion right up to ~0.94; fading it out is
+                // what makes the handoff to the plain background read as
+                // one continuous motion rather than a swap.
+                var fade = v <= 0.76 ? 1 : v >= 0.86 ? 0 : (0.86 - v) / 0.10;
+                liquid.style.opacity = fade.toFixed(3);
+                liquid.style.visibility = (v <= 0.001 || fade <= 0.001) ? 'hidden' : 'visible';
+            }
+        }
+
+        function tick() {
+            var span = end - start;
+            var raw = span > 0 ? Math.min(1, Math.max(0, (window.scrollY - start) / span)) : 0;
+
+            if (reduceMotion) {
+                current = raw;
+            } else {
+                current += (raw - current) * 0.18;
+                if (Math.abs(raw - current) < 0.0015) current = raw;
+            }
+
+            apply(current);
+
+            if (current !== raw) {
+                requestAnimationFrame(tick);
+            } else {
+                ticking = false;
+            }
+        }
+
+        function wake() {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(tick);
+        }
+
+        window.addEventListener('scroll', wake, { passive: true });
+        wake();   // correct initial value on a reload that lands mid-scroll
     }
 
 
@@ -1295,6 +1411,7 @@
         initClock();
         initWork();
         initReveals();
+        initFlood();
         initTheme();
         initPixelField();
     }

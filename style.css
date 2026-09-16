@@ -22,14 +22,28 @@
 
 :root {
     /* Palette — cool near-black, neutral ink, glacier-blue accent.
-       To retune the whole site's colour, change these six values. */
-    --base: #0A0B0D;
-    --surface: #12151A;
-    --ink: #EAEBEC;
-    --muted: #7E838B;
-    --dim: #474C55;
-    --rule: rgba(255, 255, 255, .08);
-    --rule-strong: rgba(255, 255, 255, .16);
+       -n = this theme's own tone, -a = the opposite theme's — the pair a
+       consumer (--base, --ink, etc.) blends between as --flood rises with
+       scroll, so the crossfade tracks the liquid layer exactly. */
+    --base-n: #0A0B0D;    --base-a: #F3F5F8;
+    --surface-n: #12151A; --surface-a: #E7ECF1;
+    --ink-n: #EAEBEC;     --ink-a: #14181E;
+    --muted-n: #7E838B;   --muted-a: #5A616B;
+    --dim-n: #474C55;     --dim-a: #97A0AC;
+    --rule-n: rgba(255, 255, 255, .08);        --rule-a: rgba(0, 0, 0, .12);
+    --rule-strong-n: rgba(255, 255, 255, .16); --rule-strong-a: rgba(0, 0, 0, .22);
+
+    /* 0 at the hero, 1 once Profile has fully scrolled in — set on scroll by
+       app.js, in lockstep with the liquid wave's fill level. */
+    --flood: 0;
+
+    --base: color-mix(in srgb, var(--base-n), var(--base-a) calc(var(--flood) * 100%));
+    --surface: color-mix(in srgb, var(--surface-n), var(--surface-a) calc(var(--flood) * 100%));
+    --ink: color-mix(in srgb, var(--ink-n), var(--ink-a) calc(var(--flood) * 100%));
+    --muted: color-mix(in srgb, var(--muted-n), var(--muted-a) calc(var(--flood) * 100%));
+    --dim: color-mix(in srgb, var(--dim-n), var(--dim-a) calc(var(--flood) * 100%));
+    --rule: color-mix(in srgb, var(--rule-n), var(--rule-a) calc(var(--flood) * 100%));
+    --rule-strong: color-mix(in srgb, var(--rule-strong-n), var(--rule-strong-a) calc(var(--flood) * 100%));
 
     /* Solid accent — used everywhere small: dots, hairlines, numerals.
        A gradient can't resolve at 1px, so these stay flat on purpose. */
@@ -41,10 +55,13 @@
     --accent-pale: #E2F6FF;
     --accent-gradient: linear-gradient(98deg, var(--accent-deep) 0%, var(--accent) 52%, var(--accent-pale) 100%);
 
-    /* Theme-dependent helpers, so the atmosphere layers flip too. */
-    --dot: rgba(255, 255, 255, .055);
-    --scrim: 10, 11, 13;
+    /* --dot and --scrim are DERIVED below (from --ink / --base, which are
+       already flood-aware) rather than declared per theme — a theme-only
+       value here would visibly mismatch once the actual background has
+       flood-mixed away from the theme's own resting tone. --grain-opacity
+       stays theme-only; it's an intensity tweak, not a colour to match. */
     --grain-opacity: .035;
+    --dot: color-mix(in srgb, var(--ink) 7%, transparent);
 
     /* Everything below is shared by both themes — it must live on the base
        :root, not in a theme block, or the other theme loses it entirely. */
@@ -68,20 +85,18 @@
    darkens because the icy blue that reads well on near-black is far too pale
    to hold contrast on paper. */
 :root[data-theme="light"] {
-    --base: #F3F5F8;
-    --surface: #E7ECF1;
-    --ink: #14181E;
-    --muted: #5A616B;
-    --dim: #97A0AC;
-    --rule: rgba(0, 0, 0, .12);
-    --rule-strong: rgba(0, 0, 0, .22);
+    --base-n: #F3F5F8;    --base-a: #0A0B0D;
+    --surface-n: #E7ECF1; --surface-a: #12151A;
+    --ink-n: #14181E;     --ink-a: #EAEBEC;
+    --muted-n: #5A616B;   --muted-a: #7E838B;
+    --dim-n: #97A0AC;     --dim-a: #474C55;
+    --rule-n: rgba(0, 0, 0, .12);  --rule-a: rgba(255, 255, 255, .08);
+    --rule-strong-n: rgba(0, 0, 0, .22); --rule-strong-a: rgba(255, 255, 255, .16);
 
     --accent: #1E7FC4;
     --accent-deep: #14608F;
     --accent-pale: #6FB9E6;
 
-    --dot: rgba(0, 0, 0, .07);
-    --scrim: 243, 245, 248;
     --grain-opacity: .022;
 }
 
@@ -251,6 +266,58 @@ ol {
     pointer-events: none;
 }
 
+/* Liquid flood — a solid fill in the opposite theme's tone, rising up the
+   viewport as --flood goes 0 → 1 (app.js ties this to scroll). Its top edge
+   is a wave, drawn twice and drifted slowly for an organic, living surface
+   rather than a straight waterline. Once flood reaches 0 or 1 it's either
+   fully hidden or an exact match for the (also flood-mixed) page background,
+   so it only ever reads as visible during the crossfade itself. */
+.liquid {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    /* Travels a full 100vh (hidden below) PLUS an extra 22vh, so that once
+       fully risen the container has overshot flush-top — the crest (drawn
+       near the top of its own viewBox already) is carried well past y=0
+       and off-screen, leaving solid colour edge-to-edge rather than a wave
+       line stalled partway up. */
+    transform: translateY(calc((1 - var(--flood, 0)) * 122vh - 22vh));
+}
+
+.liquid-wave {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 220%;
+    height: 100%;
+    display: block;
+    fill: var(--base-a);
+}
+
+.liquid-wave.back {
+    opacity: .5;
+    animation: liquidDriftBack 22s linear infinite;
+}
+
+.liquid-wave.front {
+    animation: liquidDriftFront 16s linear infinite reverse;
+}
+
+@keyframes liquidDriftBack {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-31.25%); }
+}
+
+@keyframes liquidDriftFront {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-31.25%); }
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    NAV
@@ -281,7 +348,7 @@ ol {
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background: linear-gradient(to bottom, rgba(var(--scrim), .92), rgba(var(--scrim), 0));
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--base) 92%, transparent), transparent);
 }
 
 .nav.is-stuck::before {
@@ -290,7 +357,7 @@ ol {
 }
 
 .nav.is-stuck {
-    background: rgba(var(--scrim), .72);
+    background: color-mix(in srgb, var(--base) 72%, transparent);
     backdrop-filter: blur(14px) saturate(140%);
     -webkit-backdrop-filter: blur(14px) saturate(140%);
     border-bottom-color: var(--rule);
@@ -769,6 +836,109 @@ ol {
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   CAROUSEL — the flood's runway. Two tilted bands of the wordmark, looping
+   in opposite directions at different speeds so they never fall into a
+   repeating unison. Text colour is the same var(--ink) as everything else,
+   so it rides the black<->white crossfade rather than fighting it — the
+   wash-out that made Profile unreadable happens here instead, on a word
+   nobody needs to actually read.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.carousel {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    padding: clamp(4rem, 11vh, 7rem) 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 4vh, 3rem);
+}
+
+.carousel-row {
+    width: 130%;
+    margin-left: -15%;
+    overflow: hidden;
+}
+
+.carousel-row.up {
+    transform: rotate(-3deg);
+}
+
+.carousel-row.down {
+    transform: rotate(2.5deg);
+}
+
+.carousel-track {
+    display: flex;
+    width: max-content;
+    animation: carouselLeft 38s linear infinite;
+}
+
+.carousel-row.down .carousel-track {
+    animation-name: carouselRight;
+    animation-duration: 46s;
+}
+
+.carousel-set {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.carousel-word {
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: clamp(2.75rem, 9vw, 6.5rem);
+    letter-spacing: -.03em;
+    line-height: 1;
+    color: var(--ink);
+    white-space: nowrap;
+    padding: 0 clamp(1rem, 3vw, 2.5rem);
+}
+
+.carousel-dot {
+    width: .45em;
+    height: .45em;
+    background: var(--accent);
+    flex: none;
+}
+
+/* The seam between the two rows. Flat (no rotation, unlike its neighbours),
+   opacity tied directly to --flood — no transition of its own, since it
+   should track the scroll exactly as tightly as the background does. Fill
+   is the flat target tone (--base-a), same convention as the full-page
+   liquid, so the two read as one system rather than two different effects. */
+.carousel-liquid {
+    height: clamp(1.5rem, 4.5vh, 2.75rem);
+    /* Small, conservative pull-in — NOT a full cancellation of the flex
+       gap on both sides. The rows above/below are rotated, and a rotated
+       box's bounding rect is taller than its visual footprint, so a
+       margin sized to exactly cancel the gap collides with the tilted
+       text's corners. This just tightens the seam without touching it. */
+    margin: clamp(-1rem, -1.5vh, -.5rem) 0;
+    overflow: hidden;
+    opacity: var(--flood, 0);
+}
+
+.carousel-liquid svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    fill: var(--base-a);
+}
+
+@keyframes carouselLeft {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+@keyframes carouselRight {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
    SECTION SHELL
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -901,6 +1071,52 @@ ol {
     width: 8px;
     height: 1px;
     background: var(--rule-strong);
+}
+
+.row-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: 1.25rem;
+    font-family: var(--mono);
+    font-size: .6875rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    position: relative;
+    padding-bottom: 3px;
+    transition: color .3s var(--ease);
+}
+
+.row-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .35s var(--ease);
+}
+
+.row-link:hover::after {
+    transform: scaleX(1);
+}
+
+.row-link svg {
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    flex-shrink: 0;
+    transition: transform .3s var(--ease);
+}
+
+.row-link:hover svg {
+    transform: translate(2px, -2px);
 }
 
 

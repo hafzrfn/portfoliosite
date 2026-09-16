@@ -58,13 +58,13 @@ window.SITE = {
   about: {
     lead: "A 4th-year Computer Science student working across software engineering, machine learning, and AI research.",
 
-    body: "At PUSTIKOM UNJ I built frontend systems in Vue.js and Nuxt; at KMUTT, Thailand, I led the machine learning side of an international research project and shipped a deployed AI-based cold-chain logistics tool. I also edit video freelance, working with international clients across different audiences.",
+    body: "At PUSTIKOM UNJ, I developed frontend systems using Vue.js and Nuxt, while at KMUTT, Thailand, I led the machine learning component of an international research project and developed a deployed AI-based cold-chain logistics solution. I also have freelance video editing experience, working with international clients and creating content for different audiences.",
 
     facts: [
       { label: "Based in", value: "Jakarta, ID" },
       { label: "Studying", value: "Computer Science, UNJ" },
       { label: "Focus", value: "Software · AI/ML · Research" },
-      { label: "Status", value: "Full-time at SocioTrax" }
+      { label: "Status", value: "Looking for Opportunities" }
     ]
   },
 
@@ -122,7 +122,8 @@ window.SITE = {
         "Worked with a 700k+ subscriber channel reaching 4+ million views.",
         "Run a personal 4k+ subscriber channel focused on video editing.",
         "Used Premiere Pro and After Effects for pacing, motion graphics and retention."
-      ]
+      ],
+      link: { label: "View Portfolio", href: "https://hafzmp4.netlify.app" }
     }
   ],
 
